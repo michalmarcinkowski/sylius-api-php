@@ -13,6 +13,7 @@ namespace Sylius\Api\Factory;
 
 use Sylius\Api\AdapterInterface;
 use Sylius\Api\Paginator;
+use Sylius\Api\RequestInterface;
 
 /**
  * @author Michał Marcinkowski <michal.marcinkowski@lakion.com>
@@ -22,8 +23,8 @@ class PaginatorFactory implements PaginatorFactoryInterface
     /**
      * {@inheritdoc }
      */
-    public function create(AdapterInterface $adapter, array $queryParameters, array $uriParameters = [])
+    public function create(AdapterInterface $adapter, RequestFactoryInterface $requestFactory, RequestInterface $request = null)
     {
-        return new Paginator($adapter, $queryParameters, $uriParameters);
+        return new Paginator($adapter, $requestFactory, $request);
     }
 }

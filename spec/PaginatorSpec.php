@@ -13,15 +13,47 @@ namespace spec\Sylius\Api;
 
 use PhpSpec\ObjectBehavior;
 use Sylius\Api\AdapterInterface;
+use Sylius\Api\Factory\RequestFactoryInterface;
+use Sylius\Api\RequestInterface;
 
 /**
  * @author Michał Marcinkowski <michal.marcinkowski@lakion.com>
  */
 class PaginatorSpec extends ObjectBehavior
 {
-    function let(AdapterInterface $adapter)
-    {
-        $this->beConstructedWith($adapter, ['limit' => 10], []);
+    function let(
+        AdapterInterface $adapter,
+        RequestFactoryInterface $requestFactory,
+        RequestInterface $request
+    ) {
+        $requestFactory->create()->shouldBeCalled()->willReturn($request);
+        $request->getQueryParameters()->shouldBeCalled()->willReturn([]);
+        $request->setQueryParameters(['limit' => 10])->shouldBeCalled();
+        $this->beConstructedWith($adapter, $requestFactory);
+    }
+
+    function it_sets_request_limit_to_10_if_none_given(
+        $adapter,
+        $requestFactory,
+        RequestInterface $request
+    ) {
+        $requestFactory->create()->shouldNotBeCalled();
+        $request->getQueryParameters()->shouldBeCalled()->willReturn([]);
+        $request->setQueryParameters(['limit' => 10])->shouldBeCalled();
+        $this->beConstructedWith($adapter, $requestFactory, $request);
+        $this->shouldHaveType('Sylius\Api\Paginator');
+    }
+
+    function it_does_not_set_request_limit_to_10_if_other_is_defined(
+        $adapter,
+        $requestFactory,
+        RequestInterface $request
+    ) {
+        $requestFactory->create()->shouldNotBeCalled();
+        $request->getQueryParameters()->shouldBeCalled()->willReturn(['limit' => 20]);
+        $request->setQueryParameters(['limit' => 10])->shouldNotBeCalled();
+        $this->beConstructedWith($adapter, $requestFactory, $request);
+        $this->shouldHaveType('Sylius\Api\Paginator');
     }
 
     function it_is_initializable()
@@ -34,19 +66,17 @@ class PaginatorSpec extends ObjectBehavior
         $this->shouldImplement('Sylius\Api\PaginatorInterface');
     }
 
-    function it_has_limit_10_by_default($adapter)
+    function it_has_limit_10_by_default($adapter, $request)
     {
-        $this->beConstructedWith($adapter);
-        $adapter->getNumberOfResults([])->willReturn(20);
-        $adapter->getResults(['page' => 1, 'limit' => 10], [])
+        $adapter->getNumberOfResults($request)->willReturn(20);
+        $adapter->getResults($request)
             ->willReturn(array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'))
             ->shouldBeCalled();
         $this->getCurrentPageResults()->shouldHaveCount(10);
     }
 
-    function its_limit_can_be_specified($adapter)
+    function its_limit_can_be_specified($adapter, RequestInterface $request)
     {
-        $this->beConstructedWith($adapter, ['limit' => 15]);
         $adapter->getNumberOfResults([])->willReturn(30);
         $adapter->getResults(['page' => 1, 'limit' => 15], [])
             ->willReturn(array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'))
@@ -54,11 +84,14 @@ class PaginatorSpec extends ObjectBehavior
         $this->getCurrentPageResults()->shouldHaveCount(15);
     }
 
-    function it_validates_that_limit_is_int($adapter)
+    function it_validates_that_limit_is_int($adapter, $requestFactory, RequestInterface $request1, RequestInterface $request2, RequestInterface $request3)
     {
-        $this->shouldThrow('InvalidArgumentException')->during('__construct', [$adapter, ['limit' => '1']]);
-        $this->shouldThrow('InvalidArgumentException')->during('__construct', [$adapter, ['limit' => new \stdClass()]]);
-        $this->shouldThrow('InvalidArgumentException')->during('__construct', [$adapter, ['limit' => 1.5]]);
+        $request1->getQueryParameters()->shouldBeCalled()->willReturn(['limit' => '1']);
+        $request2->getQueryParameters()->shouldBeCalled()->willReturn(['limit' => new \stdClass()]);
+        $request3->getQueryParameters()->shouldBeCalled()->willReturn(['limit' => 1.5]);
+        $this->shouldThrow('InvalidArgumentException')->during('__construct', [$adapter, $requestFactory, $request1]);
+        $this->shouldThrow('InvalidArgumentException')->during('__construct', [$adapter, $requestFactory, $request2]);
+        $this->shouldThrow('InvalidArgumentException')->during('__construct', [$adapter, $requestFactory, $request3]);
     }
 
     function it_gets_current_page_results($adapter)
@@ -81,7 +114,6 @@ class PaginatorSpec extends ObjectBehavior
 
     function it_moves_to_the_next_page($adapter)
     {
-        $this->beConstructedWith($adapter, ['limit' => 5]);
         $adapter->getNumberOfResults([])->willReturn(8);
         $adapter->getResults(['page' => 1, 'limit' => 5], [])->willReturn(array('a', 'b', 'c', 'b', 'e'));
         $adapter->getResults(['page' => 2, 'limit' => 5], [])->willReturn(array('f', 'g', 'h'));
@@ -93,7 +125,6 @@ class PaginatorSpec extends ObjectBehavior
 
     function it_moves_to_the_previous_page($adapter)
     {
-        $this->beConstructedWith($adapter, ['limit' => 5]);
         $adapter->getNumberOfResults([])->willReturn(8);
         $adapter->getResults(['page' => 1, 'limit' => 5], [])->shouldBeCalledTimes(2);
         $adapter->getResults(['page' => 1, 'limit' => 5], [])->willReturn(array('a', 'b', 'c', 'b', 'e'));

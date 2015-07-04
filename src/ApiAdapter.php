@@ -14,17 +14,18 @@ class ApiAdapter implements AdapterInterface
         $this->api = $api;
     }
 
-    public function getNumberOfResults(array $uriParameters = [])
+    public function getNumberOfResults(RequestInterface $request)
     {
-        $result = $this->api->getPaginated(['page' => 1, 'limit' => 1], $uriParameters);
+        $request->setQueryParameters(['page' => 1, 'limit' => 1]);
+        $result = $this->api->getPaginated($request);
 
         return isset($result['total']) ? $result['total'] : 0;
     }
 
-    public function getResults(array $queryParameters, array $uriParameters = [])
+    public function getResults(RequestInterface $request)
     {
-        $result = $this->api->getPaginated($queryParameters, $uriParameters);
+        $result = $this->api->getPaginated($request);
 
-        return isset($result['_embedded']['items']) ? $result['_embedded']['items'] : array();
+        return isset($result['_embedded']['items']) ? $result['_embedded']['items'] : [];
     }
 }

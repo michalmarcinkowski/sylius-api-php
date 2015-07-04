@@ -87,9 +87,9 @@ class GenericApi implements ApiInterface
     /**
      * {@inheritdoc }
      */
-    public function get($id, array $uriParameters = [])
+    public function get(RequestInterface $request)
     {
-        $response = $this->client->get(sprintf('%s%s', $this->getUri($uriParameters), $id));
+        $response = $this->client->get(sprintf('%s%s', $this->getUri($request->getUriParameters()), $request->getId()));
 
         return $this->responseToArray($response);
     }
@@ -113,8 +113,10 @@ class GenericApi implements ApiInterface
     /**
      * {@inheritdoc }
      */
-    public function getPaginated(array $queryParameters = [], array $uriParameters = [])
+    public function getPaginated(RequestInterface $request = null)
     {
+        $uriParameters = $this->getUriParameters($request);
+        $queryParameters = $this->getQueryParameters($request);
         $queryParameters['page'] = isset($queryParameters['page']) ? $queryParameters['page'] : 1;
         $queryParameters['limit'] = isset($queryParameters['limit']) ? $queryParameters['limit'] : 10;
 
@@ -175,5 +177,15 @@ class GenericApi implements ApiInterface
         }
 
         return (strpos($responseType, 'application/json') !== false) ? $response->json() : $response->xml();
+    }
+
+    private function getUriParameters(RequestInterface $request = null)
+    {
+        return null !== $request ? $request->getUriParameters() : [];
+    }
+
+    private function getQueryParameters(RequestInterface $request = null)
+    {
+        return null !== $request ? $request->getQueryParameters() : [];
     }
 }

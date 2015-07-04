@@ -13,6 +13,7 @@ namespace spec\Sylius\Api;
 
 use PhpSpec\ObjectBehavior;
 use Sylius\Api\ApiInterface;
+use Sylius\Api\RequestInterface;
 
 /**
  * @author Michał Marcinkowski <michal.marcinkowski@lakion.com>
@@ -34,9 +35,10 @@ class ApiAdapterSpec extends ObjectBehavior
         $this->shouldImplement('Sylius\Api\AdapterInterface');
     }
 
-    function it_gets_number_of_results($api)
+    function it_gets_number_of_results($api, RequestInterface $request)
     {
-        $api->getPaginated(['page' => 1, 'limit' => 1], [])->willReturn(
+        $request->setQueryParameters(['page' => 1, 'limit' => 1])->shouldBeCalled();
+        $api->getPaginated($request)->shouldBeCalled()->willReturn(
             array(
                 'page' => 1,
                 'limit' => 1,
@@ -56,37 +58,12 @@ class ApiAdapterSpec extends ObjectBehavior
                     ),
             )
         );
-        $this->getNumberOfResults()->shouldReturn(3);
+        $this->getNumberOfResults($request)->shouldReturn(3);
     }
 
-    function it_gets_number_of_results_for_a_specific_uri_parameters($api)
+    function it_gets_results($api, RequestInterface $request)
     {
-        $api->getPaginated(['page' => 1, 'limit' => 1], ['parentId' => 1])->willReturn(
-            array(
-                'page' => 1,
-                'limit' => 1,
-                'pages' => 3,
-                'total' => 3,
-                '_embedded' =>
-                    array(
-                        'items' =>
-                            array (
-                                0 =>
-                                    array(
-                                        'id' => 1,
-                                        'email' => 'chelsie.witting@example.com',
-                                        'username' => 'chelsie.witting@example.com',
-                                    ),
-                            ),
-                    ),
-            )
-        );
-        $this->getNumberOfResults(['parentId' => 1])->shouldReturn(3);
-    }
-
-    function it_gets_results($api)
-    {
-        $api->getPaginated(['page' => 1, 'limit' => 10], [])->willReturn(
+        $api->getPaginated($request)->shouldBeCalled()->willReturn(
             array(
                 'page' => 1,
                 'limit' => 10,
@@ -118,62 +95,7 @@ class ApiAdapterSpec extends ObjectBehavior
                     ),
             )
         );
-        $this->getResults(['page' => 1, 'limit' => 10])->shouldReturn(
-            array (
-                    array(
-                        'id' => 1,
-                        'email' => 'chelsie.witting@example.com',
-                        'username' => 'chelsie.witting@example.com',
-                    ),
-                    array(
-                        'id' => 2,
-                        'email' => 'chelsie.witting1@example.com',
-                        'username' => 'chelsie.witting1@example.com',
-                    ),
-                    array(
-                        'id' => 3,
-                        'email' => 'chelsie.witting2@example.com',
-                        'username' => 'chelsie.witting2@example.com',
-                    ),
-            )
-        );
-    }
-
-    function it_gets_results_for_a_specific_uri_parameters($api)
-    {
-        $api->getPaginated(['page' => 1, 'limit' => 10], ['parentId' => 1])->willReturn(
-            array(
-                'page' => 1,
-                'limit' => 10,
-                'pages' => 1,
-                'total' => 3,
-                '_embedded' =>
-                    array(
-                        'items' =>
-                            array (
-                                0 =>
-                                    array(
-                                        'id' => 1,
-                                        'email' => 'chelsie.witting@example.com',
-                                        'username' => 'chelsie.witting@example.com',
-                                    ),
-                                1 =>
-                                    array(
-                                        'id' => 2,
-                                        'email' => 'chelsie.witting1@example.com',
-                                        'username' => 'chelsie.witting1@example.com',
-                                    ),
-                                2 =>
-                                    array(
-                                        'id' => 3,
-                                        'email' => 'chelsie.witting2@example.com',
-                                        'username' => 'chelsie.witting2@example.com',
-                                    ),
-                            ),
-                    ),
-            )
-        );
-        $this->getResults(['page' => 1, 'limit' => 10], ['parentId' => 1])->shouldReturn(
+        $this->getResults($request)->shouldReturn(
             array (
                     array(
                         'id' => 1,

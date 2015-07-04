@@ -13,6 +13,8 @@ namespace spec\Sylius\Api\Factory;
 
 use PhpSpec\ObjectBehavior;
 use Sylius\Api\AdapterInterface;
+use Sylius\Api\Factory\RequestFactoryInterface;
+use Sylius\Api\RequestInterface;
 
 /**
  * @author Michał Marcinkowski <michal.marcinkowski@lakion.com>
@@ -29,8 +31,20 @@ class PaginatorFactorySpec extends ObjectBehavior
         $this->shouldImplement('Sylius\Api\Factory\PaginatorFactoryInterface');
     }
 
-    function it_returns_api_adapter_interface(AdapterInterface $adapter)
-    {
-        $this->create($adapter, ['limit' => 10])->shouldImplement('Sylius\Api\PaginatorInterface');
+    function it_returns_api_adapter_interface(
+        AdapterInterface $adapter,
+        RequestFactoryInterface $requestFactory,
+        RequestInterface $request
+    ) {
+        $requestFactory->create()->willReturn($request);
+        $this->create($adapter, $requestFactory)->shouldImplement('Sylius\Api\PaginatorInterface');
+    }
+
+    function it_creates_api_adapter_interface_using_given_request(
+        AdapterInterface $adapter,
+        RequestFactoryInterface $requestFactory,
+        RequestInterface $request
+    ) {
+        $this->create($adapter, $requestFactory, $request)->shouldImplement('Sylius\Api\PaginatorInterface');
     }
 }

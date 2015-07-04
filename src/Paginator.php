@@ -2,6 +2,8 @@
 
 namespace Sylius\Api;
 
+use Sylius\Api\Factory\RequestFactoryInterface;
+
 class Paginator implements PaginatorInterface
 {
     /**
@@ -34,19 +36,23 @@ class Paginator implements PaginatorInterface
     private $uriParameters;
 
     /**
-     * @param AdapterInterface $adapter
-     * @param array            $queryParameters
-     * @param array            $uriParameters
+     * @param AdapterInterface        $adapter
+     * @param RequestFactoryInterface $requestFactory
+     * @param null|RequestInterface   $request
      */
-    public function __construct(AdapterInterface $adapter, array $queryParameters = [], array $uriParameters = [])
+    public function __construct(AdapterInterface $adapter, RequestFactoryInterface $requestFactory, RequestInterface $request = null)
     {
+        if (null === $request) {
+            $request = $requestFactory->create();
+        }
+        $queryParameters = $request->getQueryParameters();
         $queryParameters['limit'] = isset($queryParameters['limit']) ? $queryParameters['limit'] : 10;
         if (!is_int($queryParameters['limit'])) {
             throw new \InvalidArgumentException('Page limit must an integer!');
         }
+        $request->setQueryParameters($queryParameters);
         $this->adapter = $adapter;
-        $this->queryParameters = $queryParameters;
-        $this->uriParameters = $uriParameters;
+        $this->request = $request;
         $this->lastPage = (int) ceil($this->getNumberOfResults() / $queryParameters['limit']);
     }
 
@@ -54,7 +60,7 @@ class Paginator implements PaginatorInterface
     {
         if (!$this->isResultCached()) {
             $this->queryParameters['page'] = $this->currentPage;
-            $this->currentResults = $this->adapter->getResults($this->queryParameters, $this->uriParameters);
+            $this->currentResults = $this->adapter->getResults($this->request);
         }
 
         return $this->currentResults;
@@ -96,7 +102,7 @@ class Paginator implements PaginatorInterface
     public function getNumberOfResults()
     {
         if (-1 === $this->numberOfResults) {
-            $this->numberOfResults = $this->adapter->getNumberOfResults($this->uriParameters);
+            $this->numberOfResults = $this->adapter->getNumberOfResults(clone $this->request);
         }
 
         return $this->numberOfResults;

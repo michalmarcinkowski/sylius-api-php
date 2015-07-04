@@ -17,11 +17,11 @@ namespace Sylius\Api;
 interface ApiInterface
 {
     /**
-     * @param  string|int $id            Resource ID
-     * @param  array      $uriParameters
+     * @param  RequestInterface $request
+     *
      * @return array
      */
-    public function get($id, array $uriParameters = []);
+    public function get(RequestInterface $request);
 
     /**
      * @param  array $queryParameters
@@ -31,11 +31,11 @@ interface ApiInterface
     public function getAll(array $queryParameters = [], array $uriParameters = []);
 
     /**
-     * @param  array $queryParameters
-     * @param  array $uriParameters
+     * @param  RequestInterface $request
+     *
      * @return array
      */
-    public function getPaginated(array $queryParameters = [], array $uriParameters = []);
+    public function getPaginated(RequestInterface $request = null);
 
     /**
      * @param  array              $queryParameters

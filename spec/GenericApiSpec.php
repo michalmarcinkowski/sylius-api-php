@@ -19,6 +19,7 @@ use Sylius\Api\Factory\AdapterFactoryInterface;
 use Sylius\Api\Factory\PaginatorFactoryInterface;
 use Sylius\Api\InvalidResponseFormatException;
 use Sylius\Api\PaginatorInterface;
+use Sylius\Api\RequestInterface;
 
 /**
  * @author Michał Marcinkowski <michal.marcinkowski@lakion.com>
@@ -60,33 +61,49 @@ class GenericApiSpec extends ObjectBehavior
         $this->shouldImplement('Sylius\Api\ApiInterface');
     }
 
-    function it_gets_resource_by_id($client, ResponseInterface $response)
+    function it_gets_resource_by_id($client, ResponseInterface $response, RequestInterface $request)
     {
         $response->getHeader('Content-Type')->willReturn('application/json');
         $response->json()->willReturn(['id' => 1, 'name' => 'Resource name']);
         $client->get('uri/1')->willReturn($response)->shouldBeCalled();
 
-        $this->get(1)->shouldReturn(['id' => 1, 'name' => 'Resource name']);
+        $request->getId()->shouldBeCalled()->willReturn(1);
+        $request->getUriParameters()->shouldBeCalled()->willReturn([]);
+        $this->get($request)->shouldReturn(['id' => 1, 'name' => 'Resource name']);
     }
 
-    function it_gets_resource_by_id_for_a_specific_uri_with_uri_parameters($client, $adapterFactory, $paginatorFactory, ResponseInterface $response)
-    {
+    function it_gets_resource_by_id_for_a_specific_uri_with_uri_parameters(
+        $client,
+        $adapterFactory,
+        $paginatorFactory,
+        ResponseInterface $response,
+        RequestInterface $request
+    ) {
         $this->beConstructedWith($client, 'parentUri/{parentId}/uri', $adapterFactory, $paginatorFactory);
         $response->getHeader('Content-Type')->willReturn('application/json');
         $response->json()->willReturn(['id' => 1, 'name' => 'Resource name']);
         $client->get('parentUri/2/uri/1')->willReturn($response)->shouldBeCalled();
 
-        $this->get(1, ['parentId' => 2] )->shouldReturn(['id' => 1, 'name' => 'Resource name']);
+        $request->getId()->shouldBeCalled()->willReturn(1);
+        $request->getUriParameters()->shouldBeCalled()->willReturn(['parentId' => 2]);
+        $this->get($request)->shouldReturn(['id' => 1, 'name' => 'Resource name']);
     }
 
-    function it_gets_resource_by_id_for_a_specific_uri_with_multiple_uri_parameters($client, $adapterFactory, $paginatorFactory, ResponseInterface $response)
-    {
+    function it_gets_resource_by_id_for_a_specific_uri_with_multiple_uri_parameters(
+        $client,
+        $adapterFactory,
+        $paginatorFactory,
+        ResponseInterface $response,
+        RequestInterface $request
+    ) {
         $this->beConstructedWith($client, 'parentUri/{parentId}/secondParentUri/{secondParentId}/uri', $adapterFactory, $paginatorFactory);
         $response->getHeader('Content-Type')->willReturn('application/json');
         $response->json()->willReturn(['id' => 1, 'name' => 'Resource name']);
         $client->get('parentUri/2/secondParentUri/1/uri/1')->willReturn($response)->shouldBeCalled();
 
-        $this->get(1, ['parentId' => 2, 'secondParentId' => 1] )->shouldReturn(['id' => 1, 'name' => 'Resource name']);
+        $request->getId()->shouldBeCalled()->willReturn(1);
+        $request->getUriParameters()->shouldBeCalled()->willReturn(['parentId' => 2, 'secondParentId' => 1]);
+        $this->get($request)->shouldReturn(['id' => 1, 'name' => 'Resource name']);
     }
 
     function it_gets_paginated_resources($client, ResponseInterface $response)
@@ -98,32 +115,43 @@ class GenericApiSpec extends ObjectBehavior
         $this->getPaginated()->shouldReturn(['a', 'b', 'c']);
     }
 
-    function it_gets_paginated_resources_by_page($client, ResponseInterface $response)
+    function it_gets_paginated_resources_by_page($client, ResponseInterface $response, RequestInterface $request)
     {
         $response->getHeader('Content-Type')->willReturn('application/json');
         $response->json()->willReturn(['a', 'b', 'c']);
         $client->get('uri/', ['page' => 3, 'limit' => 10])->willReturn($response)->shouldBeCalled();
 
-        $this->getPaginated(['page' => 3])->shouldReturn(['a', 'b', 'c']);
+        $request->getQueryParameters()->shouldBeCalled()->willReturn(['page' => 3]);
+        $request->getUriParameters()->shouldBeCalled()->willReturn([]);
+        $this->getPaginated($request)->shouldReturn(['a', 'b', 'c']);
     }
 
-    function it_gets_paginated_resources_by_page_with_limit($client, ResponseInterface $response)
+    function it_gets_paginated_resources_by_page_with_limit($client, ResponseInterface $response, RequestInterface $request)
     {
         $response->getHeader('Content-Type')->willReturn('application/json');
         $response->json()->willReturn(['a', 'b', 'c']);
         $client->get('uri/', ['page' => 2, 'limit' => 15])->willReturn($response)->shouldBeCalled();
 
-        $this->getPaginated(['page' => 2, 'limit' => 15])->shouldReturn(['a', 'b', 'c']);
+        $request->getQueryParameters()->shouldBeCalled()->willReturn(['page' => 2, 'limit' => 15]);
+        $request->getUriParameters()->shouldBeCalled()->willReturn([]);
+        $this->getPaginated($request)->shouldReturn(['a', 'b', 'c']);
     }
 
-    function it_gets_paginated_resources_by_page_with_limit_for_a_specific_uri_with_uri_parameters($client, $adapterFactory, $paginatorFactory, ResponseInterface $response)
-    {
+    function it_gets_paginated_resources_by_page_with_limit_for_a_specific_uri_with_uri_parameters(
+        $client,
+        $adapterFactory,
+        $paginatorFactory,
+        ResponseInterface $response,
+        RequestInterface $request
+    ) {
         $this->beConstructedWith($client, 'parentUri/{parentId}/uri', $adapterFactory, $paginatorFactory);
         $response->getHeader('Content-Type')->willReturn('application/json');
         $response->json()->willReturn(['a', 'b', 'c']);
         $client->get('parentUri/1/uri/', ['page' => 2, 'limit' => 15])->willReturn($response)->shouldBeCalled();
 
-        $this->getPaginated(['page' => 2, 'limit' => 15], ['parentId' => 1])->shouldReturn(['a', 'b', 'c']);
+        $request->getQueryParameters()->shouldBeCalled()->willReturn(['page' => 2, 'limit' => 15]);
+        $request->getUriParameters()->shouldBeCalled()->willReturn(['parentId' => 1]);
+        $this->getPaginated($request)->shouldReturn(['a', 'b', 'c']);
     }
 
     function it_creates_resource_with_body($client, ResponseInterface $response)
@@ -262,13 +290,15 @@ class GenericApiSpec extends ObjectBehavior
         $this->createPaginator()->shouldReturn($paginator);
     }
 
-    function it_throws_exception_when_invalid_response_format_is_received($client, ResponseInterface $response)
+    function it_throws_exception_when_invalid_response_format_is_received($client, ResponseInterface $response, RequestInterface $request)
     {
         $response->getHeader('Content-Type')->willReturn('application/xhtml+xml');
         $response->getBody()->willReturn('body');
         $response->getStatusCode()->willReturn(400);
         $client->get('uri/1')->willReturn($response)->shouldBeCalled();
 
-        $this->shouldThrow(new InvalidResponseFormatException('body', 400))->during('get', [1]);
+        $request->getId()->shouldBeCalled()->willReturn(1);
+        $request->getUriParameters()->shouldBeCalled()->willReturn([]);
+        $this->shouldThrow(new InvalidResponseFormatException('body', 400))->during('get', [$request]);
     }
 }
